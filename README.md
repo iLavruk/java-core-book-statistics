@@ -1,6 +1,6 @@
 # Book Statistics CLI
 
-Консольна Java 21 утиліта, що рахує статистику по книгах у JSON-файлах і зберігає результат у XML. Основна сутність — `Book`, другорядна (many-to-one) — `Author`. Атрибут `genres` багатозначний (жанри через кому).
+Консольна утиліта на Java 21, що рахує статистику по книгах у JSON-файлах і зберігає результат у XML. Основна сутність — `Book`, другорядна (many-to-one) — `Author`. Атрибут `genres` багатозначний (жанри через кому).
 
 ## Як запустити
 1. Зібрати проєкт:
@@ -9,7 +9,7 @@
    ```
 2. Запустити (папка з JSON, атрибут, опційно — кількість потоків):
    ```bash
-   mvn -q exec:java -Dexec.args="<path_to_dir> <attribute> [threads]"
+   mvn -q exec:java "-Dexec.args=<path_to_dir> <attribute> [threads]"
    ```
    - `path_to_dir` — шлях до папки з JSON-файлами (кожен файл містить масив книг).
    - `attribute` — `author` | `year_published` | `genres` (також синоніми `year`, `yearpublished`).
@@ -18,18 +18,18 @@
 
    Приклади (дефолтні потоки):
    ```bash
-   mvn -q exec:java -Dexec.args="sample-data genres"
-   mvn -q exec:java -Dexec.args="sample-data author"
-   mvn -q exec:java -Dexec.args="C:/path/with spaces/data year_published"
+   mvn -q exec:java "-Dexec.args=sample-data genres"
+   mvn -q exec:java "-Dexec.args=sample-data author"
+   mvn -q exec:java "-Dexec.args=sample-data year_published"
    ```
    Приклади (фіксована кількість потоків для експериментів):
    ```bash
-   mvn -q exec:java -Dexec.args="sample-data genres 1"
-   mvn -q exec:java -Dexec.args="sample-data genres 2"
-   mvn -q exec:java -Dexec.args="sample-data genres 4"
-   mvn -q exec:java -Dexec.args="sample-data genres 8"
+   mvn -q exec:java "-Dexec.args=sample-data genres 1"
+   mvn -q exec:java "-Dexec.args=sample-data genres 2"
+   mvn -q exec:java "-Dexec.args=sample-data genres 4"
+   mvn -q exec:java "-Dexec.args=sample-data genres 8"
    ```
-   В IntelliJ зручно створити Application run configuration (Main class: `com.profitsoft.statistics.Application`, Program arguments: `sample-data genres`).
+   В IntelliJ можна створити Application run configuration (Main class: `com.profitsoft.statistics.Application`, Program arguments: `sample-data genres`).
 
 ## Формат вхідних/вихідних даних
 Вхід (`sample-data/books_1.json`):

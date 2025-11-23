@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -40,26 +43,29 @@ public class StatisticsCalculator {
 
     ConcurrentHashMap<String, LongAdder> counters = new ConcurrentHashMap<>();
     ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-    List<Future<?>> futures = new ArrayList<>();
-    for (Path file : files) {
-      futures.add(executor.submit(() -> parseFile(attribute, counters, file)));
-    }
-
-    for (Future<?> future : futures) {
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof UncheckedIOException io) {
-          throw io;
-        }
-        throw new RuntimeException("Failed to parse files", cause);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Interrupted while parsing files", e);
+    try {
+      List<Future<?>> futures = new ArrayList<>();
+      for (Path file : files) {
+        futures.add(executor.submit(() -> parseFile(attribute, counters, file)));
       }
+
+      for (Future<?> future : futures) {
+        try {
+          future.get();
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof UncheckedIOException io) {
+            throw io;
+          }
+          throw new RuntimeException("Failed to parse files", cause);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException("Interrupted while parsing files", e);
+        }
+      }
+    } finally {
+      executor.shutdown();
     }
-    executor.shutdown();
 
     return toImmutableMap(counters);
   }
@@ -74,6 +80,7 @@ public class StatisticsCalculator {
 
   private void accumulate(Attribute attribute, ConcurrentHashMap<String, LongAdder> counters, Book book) {
     attribute.extractValues(book).stream()
+        .filter(Objects::nonNull)
         .map(String::trim)
         .filter(value -> !value.isEmpty())
         .forEach(value -> counters.computeIfAbsent(value, key -> new LongAdder()).increment());
@@ -100,9 +107,15 @@ public class StatisticsCalculator {
       return Collections.emptyMap();
     }
     return counters.entrySet().stream()
-        .collect(java.util.stream.Collectors.toUnmodifiableMap(
+        .sorted(Comparator
+            .<Map.Entry<String, LongAdder>>comparingLong(entry -> entry.getValue().longValue())
+            .reversed()
+            .thenComparing(Map.Entry::getKey))
+        .collect(java.util.stream.Collectors.toMap(
             Map.Entry::getKey,
-            entry -> entry.getValue().longValue()
+            entry -> entry.getValue().longValue(),
+            (a, b) -> a,
+            LinkedHashMap::new
         ));
   }
 }

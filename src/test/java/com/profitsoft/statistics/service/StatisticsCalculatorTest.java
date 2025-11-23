@@ -43,4 +43,15 @@ class StatisticsCalculatorTest {
     assertEquals(2L, stats.get("Jane Austen"));
     assertEquals(2L, stats.get("William Shakespeare"));
   }
+
+  @Test
+  void sortingOrder_HighestCountFirst() {
+    Map<String, Long> stats = calculator.calculate(dataDirectory, Attribute.GENRES, 2);
+
+    var iterator = stats.entrySet().iterator();
+    Map.Entry<String, Long> first = iterator.next();
+    Map.Entry<String, Long> second = iterator.next();
+
+    assertTrue(first.getValue() >= second.getValue(), "Entries must be sorted by count descending");
+  }
 }
